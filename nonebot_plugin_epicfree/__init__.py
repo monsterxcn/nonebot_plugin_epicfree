@@ -13,7 +13,7 @@ from .data_source import getEpicFree, subscribeHelper
 
 epicScheduler = nonebot.get_driver().config.epic_scheduler
 if not epicScheduler:
-  epicScheduler = "sat 8 8 8"
+  epicScheduler = "5 8 8 8"
 day_of_week, hour, minute, second = epicScheduler.split(" ")
 
 
@@ -49,7 +49,7 @@ async def subEpic(bot: Bot, event: GroupMessageEvent, state: T_State):
 
 
 scheduler = require("nonebot_plugin_apscheduler").scheduler
-@scheduler.scheduled_job("cron", day_of_week=day_of_week, hour=int(hour), minute=int(minute), second=int(second))
+@scheduler.scheduled_job("cron", day_of_week=day_of_week, hour=hour, minute=minute, second=second)
 async def weeklyEpic():
   bot = nonebot.get_bot()
   whoSubscribe = await subscribeHelper()
