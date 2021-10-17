@@ -9,7 +9,7 @@ from nonebot.log import logger
 
 resPath = nonebot.get_driver().config.resources_dir
 if not resPath:
-  raise ValueError(f"请在环境变量中添加 resources_dir 参数")
+  raise ValueError(f"请在环境变量中添加 resources_dir 参数，结尾带 / 且文件夹下需新建 epicfree 子文件夹")
 
 
 # 写入与读取订阅信息
@@ -68,9 +68,9 @@ async def getEpicGame():
       "withPromotions": True
     }
   }
-  async with AsyncClient(headers=headers) as client:
+  async with AsyncClient(proxies={"all://": None}) as client:
     try:
-      res = await client.post(epic_url, json=data, timeout=10.0)
+      res = await client.post(epic_url, headers=headers, json=data, timeout=10.0)
       resJson = res.json()
       games = resJson["data"]["Catalog"]["searchStore"]["elements"]
       return games
@@ -87,48 +87,31 @@ async def getEpicFree():
   if not games:
     return "Epic 可能又抽风啦，请稍后再试（"
   else:
-    msg = ""
     for game in games:
-      game_name = game["title"]
-      game_corp = game["seller"]["name"]
-      game_price = game["price"]["totalPrice"]["fmtPrice"]["originalPrice"]
-      # 赋初值以避免 local variable referenced before assignment
-      game_dev, game_pub, game_thumbnail = (None, None, None)
       try:
+        game_name = game["title"]
+        game_corp = game["seller"]["name"]
+        game_price = game["price"]["totalPrice"]["fmtPrice"]["originalPrice"]
         game_promotions = game["promotions"]["promotionalOffers"]
         upcoming_promotions = game["promotions"]["upcomingPromotionalOffers"]
         if not game_promotions and upcoming_promotions:
-          # 促销暂未上线，但即将上线
-          promotion_data = upcoming_promotions[0]["promotionalOffers"][0]
-          start_date_iso, end_date_iso = (promotion_data["startDate"][:-1],
-                                          promotion_data["endDate"][:-1])
-          # 删除字符串中最后一个 "Z" 使 Python datetime 可处理此时间
-          start_date = datetime.fromisoformat(start_date_iso).strftime(
-            "%b.%d %H:%M")
-          end_date = datetime.fromisoformat(end_date_iso).strftime("%b.%d %H:%M")
-          msg += "\n由 {} 公司发行的游戏 {} ({}) 在 UTC 时间 {} 即将推出免费游玩，预计截至 {}。".format(
-            game_corp, game_name, game_price, start_date, end_date)
+          continue    # 促销即将上线，跳过
         else:
           for image in game["keyImages"]:
-            if image["type"] == "Thumbnail":
-              game_thumbnail = image["url"]
+            game_thumbnail = image["url"] if image["type"] == "Thumbnail" else None
           for pair in game["customAttributes"]:
-            if pair["key"] == "developerName":
-              game_dev = pair["value"]
-            if pair["key"] == "publisherName":
-              game_pub = pair["value"]
-          # 如 game["customAttributes"] 未找到则均使用 game_corp 值
-          game_dev = game_dev if game_dev != None else game_corp
-          game_pub = game_pub if game_pub != None else game_corp
+            game_dev = pair["value"] if pair["key"] == "developerName" else game_corp
+            game_pub = pair["value"] if pair["key"] == "publisherName" else game_corp
           game_desp = game["description"]
           end_date_iso = game["promotions"]["promotionalOffers"][0]["promotionalOffers"][0]["endDate"][:-1]
           end_date = datetime.fromisoformat(end_date_iso).strftime("%b.%d %H:%M")
           # API 返回不包含游戏商店 URL，此处自行拼接，可能出现少数游戏 404 请反馈
-          game_url_part = (game["productSlug"].replace("/home", "")) if ("/home" in game["productSlug"]) else game["productSlug"]
-          game_url = "https://www.epicgames.com/store/zh-CN/p/{}".format(game_url_part)
-          msg += "[CQ:image,file={}]\n\nFREE now :: {} ({})\n{}\n此游戏由 {} 开发、{} 发行，将在 UTC 时间 {} 结束免费游玩，戳链接速度加入你的游戏库吧~\n{}\n".format(
-            game_thumbnail, game_name, game_price, game_desp, game_dev, game_pub, end_date, game_url)
-      except TypeError:
+          game_url = f"https://www.epicgames.com/store/zh-CN/p/{game['productSlug'].replace('/home', '')}"
+          msg = f"[CQ:image,file={game_thumbnail}]\n\n" if game_thumbnail else ""
+          msg += f"FREE now :: {game_name} ({game_price})\n\n{game_desp}\n\n"
+          msg += f"游戏由 {game_pub} 发售，" if game_dev == game_pub else f"游戏由 {game_dev} 开发、{game_pub} 出版，"
+          msg += f"将在 UTC 时间 {end_date} 结束免费游玩，戳链接领取吧~\n{game_url}"
+      except (TypeError, IndexError):
         pass
       except Exception as e:
         logger.error("组织 Epic 订阅消息错误：" + str(sys.exc_info()[0]) + "\n" + str(e))
