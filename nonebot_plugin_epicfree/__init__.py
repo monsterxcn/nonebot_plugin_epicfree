@@ -2,12 +2,17 @@ import sys
 
 import nonebot
 from nonebot import on_regex, require
-from nonebot.adapters.onebot.v11 import Bot, Event, Message
-from nonebot.adapters.onebot.v11 import GroupMessageEvent
 from nonebot.exception import FinishedException
 from nonebot.log import logger
 from nonebot.typing import T_State
-from nonebot.params import State
+
+try:
+    from nonebot.adapters.onebot.v11 import Bot, Event, Message
+    from nonebot.adapters.onebot.v11 import GroupMessageEvent
+    from nonebot.params import State
+except ImportError:
+    from nonebot.adapters.cqhttp import Bot, Event, Message
+    from nonebot.adapters.cqhttp.event import GroupMessageEvent
 
 from .data_source import getEpicFree, subscribeHelper
 
