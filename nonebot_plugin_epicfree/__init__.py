@@ -1,16 +1,14 @@
 import sys
 
-from nonebot import get_driver, get_bot
+from nonebot import on_regex, require, get_driver, get_bot
 from nonebot.exception import FinishedException
 from nonebot.log import logger
 from nonebot.typing import T_State
 
 try:
-  from nonebot.plugin import on_regex, require
   from nonebot.adapters.onebot.v11 import (Bot, Event, GroupMessageEvent,
                                            Message, MessageEvent)
 except ImportError:
-  from nonebot import on_regex, require
   from nonebot.adapters.cqhttp import Bot, Event, Message
   from nonebot.adapters.cqhttp.event import GroupMessageEvent, MessageEvent
 

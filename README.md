@@ -34,19 +34,26 @@ pip install --upgrade nonebot_plugin_epicfree
 重启 Bot 即可体验此插件。
 
 
-<details><summary><i>关于 nonebot2 版本</i></summary></br>
+<details><summary><i>关于 nonebot2 及相关依赖版本</i></summary></br>
 
 
-此插件在 nonebot2.0.0.a16 和 nonebot2.0.0.b2 测试通过！nonebot2.0.0.b1 可能不兼容，需要参考 [commit `44f4bf8`](https://github.com/monsterxcn/nonebot_plugin_epicfree/commit/44f4bf8c3c578fff242a106a28b85884c78a0404) 自行修改 `__init__.py` 中 `T_State` 的写法。
+此插件在以下两种环境测试通过！
 
 
-</details>
+```
+# 文件夹拷贝方式安装
+nonebot2.0.0.a16 nonebot-adapter-cqhttp==2.0.0a16
+
+# 命令行 / 脚手架安装
+nonebot2.0.0.b2 nonebot-adapter-onebot==2.0.0b1
+```
 
 
-<details><summary><i>关于依赖版本</i></summary></br>
+此插件在 nonebot2.0.0.b1 下可能不兼容，需要参考 [commit `44f4bf8`](https://github.com/monsterxcn/nonebot_plugin_epicfree/commit/44f4bf8c3c578fff242a106a28b85884c78a0404) 自行修改 `__init__.py` 中 `T_State` 的写法。
 
+在已淘汰的 Nonebot2 适配器 [nonebot-adapter-cqhttp](https://pypi.org/project/nonebot-adapter-cqhttp/) 下，通过拷贝文件夹 `nonebot_plugin_epicfree` 至 Nonebot2 插件目录、手动安装 `nonebot-plugin-apscheduler` 和 `httpx` 依赖后仍可正常启用此插件。在未来某个版本会完全移除该适配器支持，请尽快升级至 `nonebot-adapter-onebot`。
 
-以上述方式安装本插件时，可能由于版本差异引起报错，对于新手推荐在安装插件前先存留当前环境依赖版本，以便后续恢复：
+以上述命令行方式安装本插件时，可能由于依赖版本差异报错。对于新手，推荐在安装插件前备份当前环境依赖版本，以便后续恢复：
 
 
 ```bash
@@ -58,12 +65,6 @@ pip3 freeze > requirements.txt
 # 若安装出错，可尝试恢复之前备份的依赖版本
 pip3 install -r requirements.txt
 ```
-
-
-若实在无法使用，可以自行将仓库内 `nonebot_plugin_epicfree` 文件夹复制到 Nonebot2 机器人插件目录下，确保安装过 `nonebot_plugin_apscheduler`，重启 bot 即可！
-
-
-> 建议学习使用 **Python 虚拟环境**。
 
 
 </details>
