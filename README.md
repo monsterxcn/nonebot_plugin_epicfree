@@ -34,6 +34,15 @@ pip install --upgrade nonebot_plugin_epicfree
 重启 Bot 即可体验此插件。
 
 
+<details><summary><i>关于 nonebot2 版本</i></summary></br>
+
+
+此插件在 nonebot2.0.0.a16 和 nonebot2.0.0.b2 测试通过！
+
+
+</details>
+
+
 <details><summary><i>关于依赖版本</i></summary></br>
 
 
@@ -78,21 +87,23 @@ nonebot.load_plugin("nonebot_plugin_epicfree")
 
 
 ```python
-# nonebot_plugin_epicfree/__init__.py#L20
+# nonebot_plugin_epicfree/__init__.py#L26
 epicMatcher = on_regex("((E|e)(P|p)(I|i)(C|c))?喜(加一|\+1)")
 
-# nonebot_plugin_epicfree/__init__.py#L27
+# nonebot_plugin_epicfree/__init__.py#L33
 epicSubMatcher = on_regex("喜(加一|\+1)(私聊)?订阅")
 ```
 
 
 发送「喜加一」查找游戏，群组内发送「喜加一订阅」订阅限免游戏资讯。基于正则匹配，所以，甚至「EpIc喜+1」这样的指令都可用！（
 
-使用限免游戏资讯订阅功能请指定一个文件夹用于存放订阅配置，该文件夹需要包含一个名为 `epicfree` 的子文件夹，在 Nonebot2 `.env` 中填写父文件夹路径，注意以 `/` 结尾，如果是 Windows 系统应写成形如 `D:/path/to/resources_dir/`。限免游戏资讯订阅默认每周六 08:08:08 发送，如需自定义请在 `.env` 中添加格式如下的配置，其中四个数字依次代表 `day_of_week` `hour` `minute` `second`。
+限免游戏资讯订阅功能默认在插件文件夹内生成配置文件。但建议自行指定用于存放订阅配置的文件夹，将其写入 `resources_dir` 环境变量即可。注意该文件夹需要包含一个名为 `epicfree` 的子文件夹。在 Nonebot2 `.env` 中填写时注意去除结尾的 `/`，如果是 Windows 系统应写成形如 `D:/path/to/resources_dir`。
+
+限免游戏资讯订阅默认每周六 08:08:08 发送，如需自定义请在 `.env` 中添加格式如下的配置，其中四个数字依次代表 `day_of_week` `hour` `minute` `second`。
 
 
 ```
-resources_dir="/data/bot/resources/"
+resources_dir="/data/bot/resources"
 epic_scheduler="5 8 8 8"
 ```
 

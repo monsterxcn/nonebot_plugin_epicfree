@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 from datetime import datetime
 
@@ -6,10 +7,12 @@ import nonebot
 from httpx import AsyncClient
 from nonebot.log import logger
 
-
-resPath = nonebot.get_driver().config.resources_dir
-if not resPath:
-  raise ValueError(f"请在环境变量中添加 resources_dir 参数，结尾带 / 且文件夹下需新建 epicfree 子文件夹")
+try:
+  resPath = nonebot.get_driver().config.resources_dir
+  cache = f"{resPath}{os.sep}epicfree{os.sep}status.json"
+except AttributeError:
+  resPath = os.path.dirname(os.path.abspath(__file__))
+  cache = f"{resPath}{os.sep}status.json"
 
 
 # 写入与读取订阅信息
@@ -17,14 +20,12 @@ if not resPath:
 # method="r" 读取时返回订阅状态字典
 async def subscribeHelper(method="r", subType="", subject=""):
   try:
-    with open(f"{resPath}epicfree/status.json", "r", encoding="UTF-8") as f:
+    with open(cache, "r", encoding="UTF-8") as f:
       statusDict = json.load(f)
-      f.close()
   except FileNotFoundError:
     statusDict = {"群聊": [], "私聊": []}
-    with open(f"{resPath}epicfree/status.json", "w", encoding="UTF-8") as f:
+    with open(cache, "w", encoding="UTF-8") as f:
       json.dump(statusDict, f, ensure_ascii=False, indent=2)
-      f.close()
   except Exception as e:
     logger.error("获取 Epic 订阅 JSON 错误：" + str(sys.exc_info()[0]) + "\n" + str(e))
   # 读取时，返回订阅状态字典
@@ -35,7 +36,7 @@ async def subscribeHelper(method="r", subType="", subject=""):
     if subject in statusDict[subType]:
       return f"{subType}已经订阅过 Epic 限免游戏资讯了哦！"
     statusDict[subType].append(subject)
-    with open(f"{resPath}epicfree/status.json", "w", encoding="UTF-8") as f:
+    with open(cache, "w", encoding="UTF-8") as f:
       json.dump(statusDict, f, ensure_ascii=False, indent=2)
       f.close()
     return f"{subType}订阅 Epic 限免游戏资讯成功！"

@@ -8,42 +8,44 @@ from nonebot.typing import T_State
 
 try:
     from nonebot.adapters.onebot.v11 import Bot, Event, Message
-    from nonebot.adapters.onebot.v11 import GroupMessageEvent
-    from nonebot.params import State
+    from nonebot.adapters.onebot.v11 import GroupMessageEvent, MessageEvent
 except ImportError:
     from nonebot.adapters.cqhttp import Bot, Event, Message
-    from nonebot.adapters.cqhttp.event import GroupMessageEvent
+    from nonebot.adapters.cqhttp.event import GroupMessageEvent, MessageEvent
 
 from .data_source import getEpicFree, subscribeHelper
 
-
-epicScheduler = nonebot.get_driver().config.epic_scheduler
-if not epicScheduler:
+try:
+  epicScheduler = nonebot.get_driver().config.epic_scheduler
+except AttributeError:
   epicScheduler = "5 8 8 8"
 day_of_week, hour, minute, second = epicScheduler.split(" ")
 
 
 epicMatcher = on_regex("((E|e)(P|p)(I|i)(C|c))?喜(加一|\+1)", priority=2)
 @epicMatcher.handle()
-async def onceHandle(bot: Bot, event: Event, state: T_State=State()):
+async def onceHandle(bot: Bot, event: Event):
   imfree = await getEpicFree()
   await epicMatcher.finish(Message(imfree))
 
 
 epicSubMatcher = on_regex("喜(加一|\+1)(私聊)?订阅", priority=1)
 @epicSubMatcher.handle()
-async def subHandle(bot: Bot, event: GroupMessageEvent, state: T_State=State()):
-  if event.sender.role not in ["admin", "owner"] or "私聊" in event.get_plaintext():
-    # 普通群员只会启用私聊订阅
-    # state["targetId"] = event.get_user_id()
-    state["subType"] = "私聊"
+async def subHandle(bot: Bot, event: MessageEvent, state: T_State):
+  if isinstance(event, GroupMessageEvent):
+    if event.sender.role not in ["admin", "owner"] or "私聊" in event.get_plaintext():
+      # 普通群员只会启用私聊订阅
+      # state["targetId"] = event.get_user_id()
+      state["subType"] = "私聊"
+    else:
+      # 管理员用户询问需要私聊订阅还是群聊订阅
+      pass
   else:
-    # 管理员用户询问需要私聊订阅还是群聊订阅
-    pass
+    state["subType"] = "私聊"
 
 
 @epicSubMatcher.got("subType", prompt="默认启用群聊订阅，如需私聊订阅请回复「私聊」")
-async def subEpic(bot: Bot, event: GroupMessageEvent, state: T_State=State()):
+async def subEpic(bot: Bot, event: MessageEvent, state: T_State):
   if "私聊" in state["subType"]:
     state["targetId"] = event.get_user_id()
     state["subType"] = "私聊"
