@@ -37,7 +37,7 @@ pip install --upgrade nonebot_plugin_epicfree
 <details><summary><i>关于 nonebot2 版本</i></summary></br>
 
 
-此插件在 nonebot2.0.0.a16 和 nonebot2.0.0.b2 测试通过！
+此插件在 nonebot2.0.0.a16 和 nonebot2.0.0.b2 测试通过！nonebot2.0.0.b1 可能不兼容，需要参考 [commit `44f4bf8`](https://github.com/monsterxcn/nonebot_plugin_epicfree/commit/44f4bf8c3c578fff242a106a28b85884c78a0404) 自行修改 `__init__.py` 中 `T_State` 的写法。
 
 
 </details>
@@ -87,10 +87,10 @@ nonebot.load_plugin("nonebot_plugin_epicfree")
 
 
 ```python
-# nonebot_plugin_epicfree/__init__.py#L26
+# nonebot_plugin_epicfree/__init__.py#L27
 epicMatcher = on_regex("((E|e)(P|p)(I|i)(C|c))?喜(加一|\+1)")
 
-# nonebot_plugin_epicfree/__init__.py#L33
+# nonebot_plugin_epicfree/__init__.py#L34
 epicSubMatcher = on_regex("喜(加一|\+1)(私聊)?订阅")
 ```
 

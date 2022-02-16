@@ -1,23 +1,25 @@
 import sys
 
-import nonebot
-from nonebot import on_regex, require
+from nonebot import get_driver, get_bot
 from nonebot.exception import FinishedException
 from nonebot.log import logger
 from nonebot.typing import T_State
 
 try:
-    from nonebot.adapters.onebot.v11 import Bot, Event, Message
-    from nonebot.adapters.onebot.v11 import GroupMessageEvent, MessageEvent
+  from nonebot.plugin import on_regex, require
+  from nonebot.adapters.onebot.v11 import (Bot, Event, GroupMessageEvent,
+                                           Message, MessageEvent)
 except ImportError:
-    from nonebot.adapters.cqhttp import Bot, Event, Message
-    from nonebot.adapters.cqhttp.event import GroupMessageEvent, MessageEvent
+  from nonebot import on_regex, require
+  from nonebot.adapters.cqhttp import Bot, Event, Message
+  from nonebot.adapters.cqhttp.event import GroupMessageEvent, MessageEvent
 
 from .data_source import getEpicFree, subscribeHelper
 
 try:
-  epicScheduler = nonebot.get_driver().config.epic_scheduler
-except AttributeError:
+  epicScheduler = get_driver().config.epic_scheduler
+  assert epicScheduler is not None
+except (AttributeError, AssertionError):
   epicScheduler = "5 8 8 8"
 day_of_week, hour, minute, second = epicScheduler.split(" ")
 
@@ -59,7 +61,7 @@ async def subEpic(bot: Bot, event: MessageEvent, state: T_State):
 scheduler = require("nonebot_plugin_apscheduler").scheduler
 @scheduler.scheduled_job("cron", day_of_week=day_of_week, hour=hour, minute=minute, second=second)
 async def weeklyEpic():
-  bot = nonebot.get_bot()
+  bot = get_bot()
   whoSubscribe = await subscribeHelper()
   imfree = await getEpicFree()
   try:

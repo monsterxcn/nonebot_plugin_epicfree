@@ -3,14 +3,15 @@ import os
 import sys
 from datetime import datetime
 
-import nonebot
 from httpx import AsyncClient
+from nonebot import get_driver
 from nonebot.log import logger
 
 try:
-  resPath = nonebot.get_driver().config.resources_dir
+  resPath = get_driver().config.resources_dir
   cache = f"{resPath}{os.sep}epicfree{os.sep}status.json"
-except AttributeError:
+  assert os.path.exists(cache)
+except (AttributeError, AssertionError):
   resPath = os.path.dirname(os.path.abspath(__file__))
   cache = f"{resPath}{os.sep}status.json"
 

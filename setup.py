@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="nonebot_plugin_epicfree",
-    version="0.1.5",
+    version="0.1.6",
     author="monsterxcn",
     author_email="monsterxcn@gmail.com",
     description="A Epic free game info plugin for Nonebot2",
