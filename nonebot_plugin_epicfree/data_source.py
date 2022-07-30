@@ -102,20 +102,26 @@ async def getEpicFree() -> str:
                     continue  # 促销即将上线，跳过
                 else:
                     for image in game["keyImages"]:
-                        game_thumbnail = (
-                            image["url"] if image["type"] == "Thumbnail" else None
-                        )
+                        # 修复部分游戏无法找到图片
+                        # https://github.com/HibiKier/zhenxun_bot/commit/92e60ba141313f5b28f89afdfe813b29f13468c1
+                        if (
+                            image.get("url")
+                            and not game_thumbnail
+                            and image["type"]
+                            in [
+                                "Thumbnail",
+                                "VaultOpened",
+                                "DieselStoreFrontWide",
+                                "OfferImageWide",
+                            ]
+                        ):
+                            game_thumbnail = image["url"]
+                            break
                     for pair in game["customAttributes"]:
-                        game_dev = (
-                            pair["value"]
-                            if pair["key"] == "developerName"
-                            else game_corp
-                        )
-                        game_pub = (
-                            pair["value"]
-                            if pair["key"] == "publisherName"
-                            else game_corp
-                        )
+                        if pair["key"] == "developerName":
+                            game_dev = pair["value"]
+                        elif pair["key"] == "publisherName":
+                            game_pub = pair["value"]
                     game_desp = game["description"]
                     end_date_iso = game["promotions"]["promotionalOffers"][0][
                         "promotionalOffers"
@@ -124,18 +130,25 @@ async def getEpicFree() -> str:
                         "%b.%d %H:%M"
                     )
                     # API 返回不包含游戏商店 URL，此处自行拼接，可能出现少数游戏 404 请反馈
-                    game_url = f"https://www.epicgames.com/store/zh-CN/p/{game['productSlug'].replace('/home', '')}"  # noqa: E501
-                    msg = (
-                        f"[CQ:image,file={game_thumbnail}]\n\n" if game_thumbnail else ""
+                    game_url = f"https://www.epicgames.com/store/zh-CN/p/{game['productSlug'].replace('/home', '')}"
+                    msg = "{}FREE now :: {} ({})\n\n{}\n\n{}，将在 UTC 时间 {} 结束免费游玩，戳链接领取吧~\n{}".format(
+                        (
+                            f"[CQ:image,file={game_thumbnail}]\n\n"
+                            if game_thumbnail
+                            else ""
+                        ),
+                        game_name,
+                        game_price,
+                        game_desp,
+                        (
+                            f"游戏由 {game_pub} 发行"
+                            if game_dev == game_pub
+                            else f"游戏由 {game_dev} 开发、{game_pub} 发行"
+                        ),
+                        end_date,
+                        game_url,
                     )
-                    msg += (
-                        f"FREE now :: {game_name} ({game_price})\n\n"
-                        f"{game_desp}\n\n游戏由 {game_pub} 发售，"
-                        if game_dev == game_pub
-                        else f"游戏由 {game_dev} 开发、{game_pub} 出版，"
-                    )
-                    msg += f"将在 UTC 时间 {end_date} 结束免费游玩，戳链接领取吧~\n{game_url}"
-            except (TypeError, IndexError):
+            except (AttributeError, IndexError, TypeError):
                 pass
             except Exception as e:
                 logger.error(f"组织 Epic 订阅消息错误 {type(e)}：{e}")
