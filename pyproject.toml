@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot_plugin_epicfree"
-version = "0.1.7"
+version = "0.1.8"
 description = "A Epic free game info plugin for Nonebot2"
 authors = ["monsterxcn <monsterxcn@gmail.com>"]
 documentation = "https://github.com/monsterxcn/nonebot_plugin_epicfree#readme"
