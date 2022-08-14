@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime
+from pathlib import Path
 from traceback import format_exc
 from typing import Dict, List, Union
 
@@ -9,12 +10,14 @@ from nonebot import get_driver
 from nonebot.log import logger
 
 try:
-    resPath = get_driver().config.resources_dir
-    cache = f"{resPath}{os.sep}epicfree{os.sep}status.json"
-    assert os.path.exists(cache)
+    resPath = Path(get_driver().config.resources_dir) / "epicfree"
+    assert os.path.exists(resPath)
+    cache = resPath / "status.json"
 except (AttributeError, AssertionError):
-    resPath = os.path.dirname(os.path.abspath(__file__))
-    cache = f"{resPath}{os.sep}status.json"
+    resPath = Path() / "data" / "epicfree"
+    if not os.path.exists(resPath):
+        resPath.mkdir(parents=True, exist_ok=True)
+    cache = resPath / "status.json"
 
 
 # 写入与读取订阅信息
