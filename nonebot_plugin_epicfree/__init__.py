@@ -13,8 +13,8 @@ try:
         MessageEvent,
     )
 except ImportError:
-    from nonebot.adapters.cqhttp import Bot, Event, Message
-    from nonebot.adapters.cqhttp.event import GroupMessageEvent, MessageEvent
+    from nonebot.adapters.cqhttp import Bot, Event, Message  # type: ignore
+    from nonebot.adapters.cqhttp.event import GroupMessageEvent, MessageEvent  # type: ignore
 
 from .data_source import getEpicFree, subscribeHelper
 
@@ -26,7 +26,7 @@ except (AttributeError, AssertionError):
 day_of_week, hour, minute, second = epicScheduler.split(" ")
 
 
-epicMatcher = on_regex("((E|e)(P|p)(I|i)(C|c))?喜(加一|\+1)", priority=2)
+epicMatcher = on_regex(r"((E|e)(P|p)(I|i)(C|c))?喜(加一|\+1)", priority=2)
 
 
 @epicMatcher.handle()
@@ -35,7 +35,7 @@ async def onceHandle(bot: Bot, event: Event):
     await epicMatcher.finish(Message(imfree))
 
 
-epicSubMatcher = on_regex("喜(加一|\+1)(私聊)?订阅", priority=1)
+epicSubMatcher = on_regex(r"喜(加一|\+1)(私聊)?订阅", priority=1)
 
 
 @epicSubMatcher.handle()
@@ -52,9 +52,9 @@ async def subHandle(bot: Bot, event: MessageEvent, state: T_State):
         state["subType"] = "私聊"
 
 
-@epicSubMatcher.got("subType", prompt="默认启用群聊订阅，如需私聊订阅请回复「私聊」")
+@epicSubMatcher.got("subType", prompt="回复「私聊」启用私聊订阅，回复其他内容启用群聊订阅：")
 async def subEpic(bot: Bot, event: MessageEvent, state: T_State):
-    if "私聊" in state["subType"]:
+    if any("私聊" in i for i in [event.get_plaintext().strip(), state["subType"]]):
         state["targetId"] = event.get_user_id()
         state["subType"] = "私聊"
     else:
