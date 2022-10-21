@@ -5,10 +5,10 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="nonebot_plugin_epicfree",
-    version="0.1.9",
+    version="0.1.10",
     author="monsterxcn",
     author_email="monsterxcn@gmail.com",
-    description="A Epic free game info plugin for Nonebot2",
+    description="EpicGameStore free games promotions plugin for NoneBot2",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/monsterxcn/nonebot_plugin_epicfree",
@@ -20,12 +20,12 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    packages=['nonebot_plugin_epicfree'],
-    python_requires=">=3.7.3,<4.0",
+    packages=["nonebot_plugin_epicfree"],
+    python_requires=">=3.8,<4.0",
     install_requires=[
-        'nonebot2',
-        'httpx',
-        'nonebot-adapter-onebot',
-        'nonebot-plugin-apscheduler'
+        "nonebot2>=2.0.0b3",
+        "httpx>=0.20.0,<1.0.0",
+        "nonebot-adapter-onebot>=2.0.0b1",
+        "nonebot-plugin-apscheduler>=0.1.0",
     ],
 )

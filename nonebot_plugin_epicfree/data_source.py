@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 from traceback import format_exc
-from typing import Dict, List, Union
+from typing import Dict, List, Literal, Union
 
 from httpx import AsyncClient
 from nonebot import get_driver
@@ -21,34 +21,37 @@ except (AttributeError, AssertionError):
 
 
 # 写入与读取订阅信息
-# method="w" 写入时返回新增订阅结果字符串
-# method="r" 读取时返回订阅状态字典
 async def subscribeHelper(
-    method: str = "r", subType: str = "", subject: str = ""
+    method: Literal["读取", "启用", "删除"] = "读取", subType: str = "", subject: str = ""
 ) -> Union[Dict, str]:
-    statusDict = {"群聊": [], "私聊": []}
-    try:
-        with open(cache, "r", encoding="UTF-8") as f:
-            statusDict = json.load(f)
-    except FileNotFoundError:
-        with open(cache, "w", encoding="UTF-8") as f:
-            json.dump(statusDict, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        logger.error(f"获取 Epic 订阅 JSON 错误 {type(e)}：{e}")
+    if cache.exists():
+        statusDict = json.loads(cache.read_text(encoding="UTF-8"))
+    else:
+        statusDict = {"群聊": [], "私聊": []}
+        cache.write_text(
+            json.dumps(statusDict, ensure_ascii=False, indent=2), encoding="UTF-8"
+        )
     # 读取时，返回订阅状态字典
-    if method != "w":
+    if method == "读取":
         return statusDict
-    # 写入时，将新的用户按类别写入至指定数组
-    try:
+    # 启用订阅时，将新的用户按类别写入至指定数组
+    elif method == "启用":
         if subject in statusDict[subType]:
-            return f"{subType}已经订阅过 Epic 限免游戏资讯了哦！"
+            return f"{subType}{subject} 已经订阅过 Epic 限免游戏资讯了哦！"
         statusDict[subType].append(subject)
-        with open(cache, "w", encoding="UTF-8") as f:
-            json.dump(statusDict, f, ensure_ascii=False, indent=2)
-        return f"{subType}订阅 Epic 限免游戏资讯成功！"
+    # 删除订阅
+    elif method == "删除":
+        if subject not in statusDict[subType]:
+            return f"{subType}{subject} 未曾订阅过 Epic 限免游戏资讯！"
+        statusDict[subType].remove(subject)
+    try:
+        cache.write_text(
+            json.dumps(statusDict, ensure_ascii=False, indent=2), encoding="UTF-8"
+        )
+        return f"{subType}{subject} Epic 限免游戏资讯订阅已{method}！"
     except Exception as e:
-        logger.error(f"获取 Epic 订阅 JSON 错误 {type(e)}：{e}")
-        return f"{subType}订阅 Epic 限免游戏资讯失败惹.."
+        logger.error(f"写入 Epic 订阅 JSON 错误 {e.__class__.__name__}\n{format_exc()}")
+        return f"{subType}{subject} Epic 限免游戏资讯订阅{method}失败惹.."
 
 
 # 获取所有 Epic Game Store 促销游戏

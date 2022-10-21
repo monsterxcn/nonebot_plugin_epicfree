@@ -18,11 +18,12 @@ except ImportError:
 
 from .data_source import getEpicFree, subscribeHelper
 
-try:
-    epicScheduler = get_driver().config.epic_scheduler
-    assert epicScheduler is not None
-except (AttributeError, AssertionError):
-    epicScheduler = "5 8 8 8"
+driver = get_driver()
+epicScheduler = (
+    str(driver.config.epic_scheduler)
+    if hasattr(driver.config, "gspanel_alias")
+    else "5 8 8 8"
+)
 day_of_week, hour, minute, second = epicScheduler.split(" ")
 
 
@@ -35,15 +36,16 @@ async def onceHandle(bot: Bot, event: Event):
     await epicMatcher.finish(Message(imfree))
 
 
-epicSubMatcher = on_regex(r"喜(加一|\+1)(私聊)?订阅", priority=1)
+epicSubMatcher = on_regex(r"喜(加一|\+1)(私聊)?订阅(删除|取消)?", priority=1)
 
 
 @epicSubMatcher.handle()
 async def subHandle(bot: Bot, event: MessageEvent, state: T_State):
+    msg = event.get_plaintext()
+    state["action"] = "删除" if any(s in msg for s in ["删除", "取消"]) else "启用"
     if isinstance(event, GroupMessageEvent):
-        if event.sender.role not in ["admin", "owner"] or "私聊" in event.get_plaintext():
+        if event.sender.role not in ["admin", "owner"] or "私聊" in msg:
             # 普通群员只会启用私聊订阅
-            # state["targetId"] = event.get_user_id()
             state["subType"] = "私聊"
         else:
             # 管理员用户询问需要私聊订阅还是群聊订阅
@@ -52,7 +54,9 @@ async def subHandle(bot: Bot, event: MessageEvent, state: T_State):
         state["subType"] = "私聊"
 
 
-@epicSubMatcher.got("subType", prompt="回复「私聊」启用私聊订阅，回复其他内容启用群聊订阅：")
+@epicSubMatcher.got(
+    "subType", prompt=Message.template("回复「私聊」{action}私聊订阅，回复其他内容{action}群聊订阅：")
+)
 async def subEpic(bot: Bot, event: MessageEvent, state: T_State):
     if any("私聊" in i for i in [event.get_plaintext().strip(), state["subType"]]):
         state["targetId"] = event.get_user_id()
@@ -60,9 +64,8 @@ async def subEpic(bot: Bot, event: MessageEvent, state: T_State):
     else:
         state["targetId"] = str(event.group_id)  # type: ignore
         state["subType"] = "群聊"
-    msg = await subscribeHelper("w", state["subType"], state["targetId"])
-    assert isinstance(msg, str)
-    await epicSubMatcher.finish(msg)
+    msg = await subscribeHelper(state["action"], state["subType"], state["targetId"])
+    await epicSubMatcher.finish(str(msg))
 
 
 @scheduler.scheduled_job(
