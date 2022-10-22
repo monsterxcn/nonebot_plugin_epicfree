@@ -14,7 +14,7 @@
   <a href="https://pypi.python.org/pypi/nonebot_plugin_epicfree">
     <img src="https://img.shields.io/pypi/v/nonebot_plugin_epicfree?style=flat-square" alt="pypi">
   </a>
-  <img src="https://img.shields.io/badge/python-3.7.3+-blue?style=flat-square" alt="python"><br />
+  <img src="https://img.shields.io/badge/python-3.8+-blue?style=flat-square" alt="python"><br />
 </p></br>
 
 
@@ -37,7 +37,16 @@ pip install --upgrade nonebot_plugin_epicfree
 <details><summary><i>关于 NoneBot2 及相关依赖版本</i></summary></br>
 
 
-在已淘汰的 NoneBot2 适配器 [nonebot-adapter-cqhttp](https://pypi.org/project/nonebot-adapter-cqhttp/) 下，切记不要使用 `pip` 或 `nb` 安装此插件。通过拷贝文件夹 `nonebot_plugin_epicfree` 至 NoneBot2 插件目录、手动安装 `nonebot-plugin-apscheduler` 和 `httpx` 依赖的方式仍可正常启用此插件。在未来某个版本会完全移除该适配器支持，请尽快升级至 `nonebot-adapter-onebot`。
+在已淘汰的 NoneBot2 适配器 [nonebot-adapter-cqhttp](https://pypi.org/project/nonebot-adapter-cqhttp/) 下，切记不要使用 `pip` 或 `nb_cli` 安装此插件。通过拷贝文件夹 `nonebot_plugin_epicfree` 至 NoneBot2 插件目录、手动安装 `nonebot-plugin-apscheduler` 和 `httpx` 依赖的方式仍可正常启用此插件。在未来某个版本会完全移除该适配器支持，请尽快升级至 [nonebot-adapter-onebot](https://pypi.org/project/nonebot-adapter-onebot/)。
+
+
+</details>
+
+
+<details><summary><i>关于 go-cqhttp 版本</i></summary></br>
+
+
+插件发送消息依赖 [@Mrs4s/go-cqhttp](https://github.com/Mrs4s/go-cqhttp) 的合并转发接口，如需启用私聊响应请务必安装 [v1.0.0-rc2](https://github.com/Mrs4s/go-cqhttp/releases/tag/v1.0.0-rc2) 以上版本的 go-cqhttp。
 
 
 </details>
@@ -47,10 +56,10 @@ pip install --upgrade nonebot_plugin_epicfree
 
 
 ```python
-# nonebot_plugin_epicfree/__init__.py#L30
+# nonebot_plugin_epicfree/__init__.py#L31
 epicMatcher = on_regex(r"((E|e)(P|p)(I|i)(C|c))?喜(加一|\+1)")
 
-# nonebot_plugin_epicfree/__init__.py#L39
+# nonebot_plugin_epicfree/__init__.py#L43
 epicSubMatcher = on_regex(r"喜(加一|\+1)(私聊)?订阅(删除|取消)?")
 ```
 

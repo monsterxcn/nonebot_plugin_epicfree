@@ -9,6 +9,12 @@ from httpx import AsyncClient
 from nonebot import get_driver
 from nonebot.log import logger
 
+# from pytz import timezone
+
+try:
+    from nonebot.adapters.onebot.v11 import Message, MessageSegment  # type: ignore
+except ImportError:
+    from nonebot.adapters.cqhttp import Message, MessageSegment  # type: ignore
 try:
     resPath = Path(get_driver().config.resources_dir) / "epicfree"
     assert os.path.exists(resPath)
@@ -58,133 +64,162 @@ async def subscribeHelper(
 # 方法参考：RSSHub /epicgames 路由
 # https://github.com/DIYgod/RSSHub/blob/master/lib/routes/epicgames/index.js
 async def getEpicGame() -> List:
-    epic_url = (
-        "https://store-site-backend-static-ipv4.ak.epicgames.com"
-        "/freeGamesPromotions?locale=zh-CN&country=CN&allowCountries=CN"
-    )
-    headers = {
-        "Referer": "https://www.epicgames.com/store/zh-CN/",
-        "Content-Type": "application/json; charset=utf-8",
-        "User-Agent": (
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
-            " (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36"
-        ),
-    }
     async with AsyncClient(proxies={"all://": None}) as client:
         try:
-            res = await client.get(epic_url, headers=headers, timeout=10.0)
+            res = await client.get(
+                "https://store-site-backend-static-ipv4.ak.epicgames.com/freeGamesPromotions",
+                params={"locale": "zh-CN", "country": "CN", "allowCountries": "CN"},
+                headers={
+                    "Referer": "https://www.epicgames.com/store/zh-CN/",
+                    "Content-Type": "application/json; charset=utf-8",
+                    "User-Agent": (
+                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+                        " (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36"
+                    ),
+                },
+                timeout=10.0,
+            )
             resJson = res.json()
-            games = resJson["data"]["Catalog"]["searchStore"]["elements"]
-            # with open(f"{resPath}epicfree/api.json", "w", encoding="utf-8") as f:
-            #     json.dump(games, f, ensure_ascii=False, indent=2)
-            return games
+            return resJson["data"]["Catalog"]["searchStore"]["elements"]
         except Exception as e:
-            logger.error(f"请求 Epic Store API 错误 {type(e)}：{e}")
+            logger.error(f"请求 Epic Store API 错误 {e.__class__.__name__}\n{format_exc()}")
             return []
 
 
 # 获取 Epic Game Store 免费游戏信息
 # 处理免费游戏的信息方法借鉴 pip 包 epicstore_api 示例
 # https://github.com/SD4RK/epicstore_api/blob/master/examples/free_games_example.py
-async def getEpicFree() -> str:
+async def getEpicFree() -> List[MessageSegment]:
     games = await getEpicGame()
     if not games:
-        return "Epic 可能又抽风啦，请稍后再试（"
+        return [
+            MessageSegment.node_custom(
+                user_id=2854196310,
+                nickname="EpicGameStore",
+                content=Message("Epic 可能又抽风啦，请稍后再试（"),
+            )
+        ]
     else:
-        logger.debug(f"获取到游戏：{('、'.join(game['title'] for game in games))}")
-        msgList = []
+        logger.debug(
+            f"获取到 {len(games)} 个游戏数据：\n{('、'.join(game['title'] for game in games))}"
+        )
+        gameCnt, msgList = 0, []
         for game in games:
-            game_name = ""
+            game_name = game.get("title", "未知")
             try:
-                game_name = game["title"]
-                game_corp = game["seller"]["name"]
-                game_price = game["price"]["totalPrice"]["fmtPrice"]["originalPrice"]
+                if not game.get("promotions"):
+                    continue
                 game_promotions = game["promotions"]["promotionalOffers"]
                 upcoming_promotions = game["promotions"]["upcomingPromotionalOffers"]
-                game_thumbnail, game_dev, game_pub = None, game_corp, game_corp
-                if not game_promotions and upcoming_promotions:
-                    logger.info(f"即将推出免费游玩的游戏：{game_name}({game_price})")
-                    continue  # 促销即将上线，跳过
-                else:
-                    for image in game["keyImages"]:
-                        # 修复部分游戏无法找到图片
-                        # https://github.com/HibiKier/zhenxun_bot/commit/92e60ba141313f5b28f89afdfe813b29f13468c1
-                        if (
-                            image.get("url")
-                            and not game_thumbnail
-                            and image["type"]
-                            in [
-                                "Thumbnail",
-                                "VaultOpened",
-                                "DieselStoreFrontWide",
-                                "OfferImageWide",
-                            ]
-                        ):
-                            game_thumbnail = image["url"]
-                            break
-                    for pair in game["customAttributes"]:
-                        if pair["key"] == "developerName":
-                            game_dev = pair["value"]
-                        elif pair["key"] == "publisherName":
-                            game_pub = pair["value"]
-                    game_desp = game["description"]
-                    date_iso = game_promotions[0]["promotionalOffers"][0]["endDate"][:-1]
-                    end_date = datetime.fromisoformat(date_iso).strftime("%b.%d %H:%M")
-                    # API 返回不包含游戏商店 URL，此处自行拼接，可能出现少数游戏 404 请反馈
-                    if game.get("productSlug"):
-                        game_url = "https://store.epicgames.com/zh-CN/p/{}".format(
-                            game["productSlug"].replace("/home", "")
+                original_price = game["price"]["totalPrice"]["fmtPrice"]["originalPrice"]
+                discount_price = game["price"]["totalPrice"]["fmtPrice"]["discountPrice"]
+                if not game_promotions:
+                    if upcoming_promotions:
+                        logger.info(f"跳过即将推出免费游玩的游戏：{game_name}({discount_price})")
+                    continue  # 仅返回正在推出免费游玩的游戏
+                elif game["price"]["totalPrice"]["fmtPrice"]["discountPrice"] != "0":
+                    logger.info(f"跳过促销但不免费的游戏：{game_name}({discount_price})")
+                    continue
+                # 处理游戏预览图
+                for image in game["keyImages"]:
+                    # 修复部分游戏无法找到图片
+                    # https://github.com/HibiKier/zhenxun_bot/commit/92e60ba141313f5b28f89afdfe813b29f13468c1
+                    if image.get("url") and image["type"] in [
+                        "Thumbnail",
+                        "VaultOpened",
+                        "DieselStoreFrontWide",
+                        "OfferImageWide",
+                    ]:
+                        msgList.append(
+                            MessageSegment.node_custom(
+                                user_id=2854196310,
+                                nickname="EpicGameStore",
+                                content=Message(MessageSegment.image(image["url"])),
+                            )
                         )
-                    elif game.get("url"):
-                        game_url = game["url"]
-                    else:
-                        slugs = (
-                            [
-                                x["pageSlug"]
-                                for x in game.get("offerMappings", [])
-                                if x.get("pageType") == "productHome"
-                            ]
-                            + [
-                                x["pageSlug"]
-                                for x in game.get("catalogNs", {}).get("mappings", [])
-                                if x.get("pageType") == "productHome"
-                            ]
-                            + [
-                                x["value"]
-                                for x in game.get("customAttributes", [])
-                                if "productSlug" in x.get("key")
-                            ]
-                        )
-                        game_url = "https://store.epicgames.com/zh-CN{}".format(
-                            f"/p/{slugs[0]}" if len(slugs) else ""
-                        )
-                    msgList.append(
-                        (
-                            "{}FREE now :: {} ({})\n\n{}\n\n{}，"
-                            "将在 UTC 时间 {} 结束免费游玩，戳链接领取吧~\n{}"
-                        ).format(
-                            (
-                                f"[CQ:image,file={game_thumbnail}]\n\n"
-                                if game_thumbnail
-                                else ""
-                            ),
-                            game_name,
-                            game_price,
-                            game_desp,
-                            (
-                                f"游戏由 {game_pub} 发行"
-                                if game_dev == game_pub
-                                else f"游戏由 {game_dev} 开发、{game_pub} 发行"
-                            ),
-                            end_date,
-                            game_url,
-                        )
+                        break
+                # 处理游戏发行信息
+                game_dev, game_pub = game["seller"]["name"], game["seller"]["name"]
+                for pair in game["customAttributes"]:
+                    if pair["key"] == "developerName":
+                        game_dev = pair["value"]
+                    elif pair["key"] == "publisherName":
+                        game_pub = pair["value"]
+                dev_info = f"{game_dev} 开发" if game_dev != game_pub else ""
+                # 处理游戏限免结束时间
+                date_iso = game_promotions[0]["promotionalOffers"][0]["endDate"][:-1]
+                end_date = (
+                    datetime.fromisoformat(date_iso)
+                    # .astimezone(tz=timezone("Asia/Shanghai"))
+                    .strftime("%m {m} %d {d} %H:%M").format(m="月", d="日")
+                )
+                # 处理游戏商城链接（API 返回不包含游戏商店 URL，依经验自行拼接
+                if game.get("productSlug"):
+                    game_url = "https://store.epicgames.com/zh-CN/p/{}".format(
+                        game["productSlug"].replace("/home", "")
                     )
+                elif game.get("url"):
+                    game_url = game["url"]
+                else:
+                    slugs = (
+                        [
+                            x["pageSlug"]
+                            for x in game.get("offerMappings", [])
+                            if x.get("pageType") == "productHome"
+                        ]
+                        + [
+                            x["pageSlug"]
+                            for x in game.get("catalogNs", {}).get("mappings", [])
+                            if x.get("pageType") == "productHome"
+                        ]
+                        + [
+                            x["value"]
+                            for x in game.get("customAttributes", [])
+                            if "productSlug" in x.get("key")
+                        ]
+                    )
+                    game_url = "https://store.epicgames.com/zh-CN{}".format(
+                        f"/p/{slugs[0]}" if len(slugs) else ""
+                    )
+                gameCnt += 1
+                msgList.extend(
+                    [
+                        MessageSegment.node_custom(
+                            user_id=2854196310,
+                            nickname="EpicGameStore",
+                            content=Message(MessageSegment.text(game_url)),
+                        ),
+                        MessageSegment.node_custom(
+                            user_id=2854196310,
+                            nickname="EpicGameStore",
+                            content=Message(
+                                (
+                                    "{} ({})\n\n{}\n\n游戏由 {}{} 发行，"
+                                    "将在 {} 结束免费游玩，戳上方链接领取吧~"
+                                ).format(
+                                    game_name,
+                                    original_price,
+                                    game["description"],
+                                    dev_info,
+                                    game_pub,
+                                    end_date,
+                                )
+                            ),
+                        ),
+                    ]
+                )
             except (AttributeError, IndexError, TypeError):
                 logger.debug(f"处理游戏 {game_name} 时遇到应该忽略的错误\n{format_exc()}")
                 pass
             except Exception as e:
-                logger.error(f"组织 Epic 订阅消息错误 {type(e)}\n{format_exc()}")
+                logger.error(f"组织 Epic 订阅消息错误 {e.__class__.__name__}\n{format_exc()}")
         # 返回整理为 CQ 码的消息字符串
-        msg = "\n\n---\n\n".join(msgList) if len(msgList) else "暂未找到正在促销的游戏..."
-        return msg
+        msgList.insert(
+            0,
+            MessageSegment.node_custom(
+                user_id=2854196310,
+                nickname="EpicGameStore",
+                content=Message(f"{gameCnt} 款游戏现在免费！" if gameCnt else "暂未找到正在促销的游戏..."),
+            ),
+        )
+        return msgList

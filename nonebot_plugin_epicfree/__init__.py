@@ -1,3 +1,4 @@
+from traceback import format_exc
 from typing import Dict
 
 from nonebot import get_bot, get_driver, on_regex
@@ -33,7 +34,10 @@ epicMatcher = on_regex(r"((E|e)(P|p)(I|i)(C|c))?喜(加一|\+1)", priority=2)
 @epicMatcher.handle()
 async def onceHandle(bot: Bot, event: Event):
     imfree = await getEpicFree()
-    await epicMatcher.finish(Message(imfree))
+    if isinstance(event, GroupMessageEvent):
+        await bot.send_group_forward_msg(group_id=event.group_id, messages=imfree)  # type: ignore
+    else:
+        await bot.send_private_forward_msg(user_id=event.user_id, messages=imfree)  # type: ignore
 
 
 epicSubMatcher = on_regex(r"喜(加一|\+1)(私聊)?订阅(删除|取消)?", priority=1)
@@ -74,14 +78,14 @@ async def subEpic(bot: Bot, event: MessageEvent, state: T_State):
 async def weeklyEpic():
     bot = get_bot()
     whoSubscribe = await subscribeHelper()
-    imfree = await getEpicFree()
+    msgList = await getEpicFree()
     try:
         assert isinstance(whoSubscribe, Dict)
         for group in whoSubscribe["群聊"]:
-            await bot.send_group_msg(group_id=group, message=Message(imfree))
+            await bot.send_group_forward_msg(group_id=group, messages=msgList)
         for private in whoSubscribe["私聊"]:
-            await bot.send_private_msg(user_id=private, message=Message(imfree))
+            await bot.send_private_forward_msg(user_id=private, messages=msgList)
     except FinishedException:
         pass
     except Exception as e:
-        logger.error(f"Epic 限免游戏资讯定时任务出错 {type(e)}：{e}")
+        logger.error(f"Epic 限免游戏资讯定时任务出错 {e.__class__.__name__}：{format_exc()}")
