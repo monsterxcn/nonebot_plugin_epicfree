@@ -8,8 +8,7 @@ from typing import Dict, List, Literal, Union
 from httpx import AsyncClient
 from nonebot import get_driver
 from nonebot.log import logger
-
-# from pytz import timezone
+from pytz import timezone
 
 try:
     from nonebot.adapters.onebot.v11 import Message, MessageSegment  # type: ignore
@@ -147,11 +146,12 @@ async def getEpicFree() -> List[MessageSegment]:
                         game_pub = pair["value"]
                 dev_info = f"{game_dev} 开发" if game_dev != game_pub else ""
                 # 处理游戏限免结束时间
-                date_iso = game_promotions[0]["promotionalOffers"][0]["endDate"][:-1]
+                date_rfc3339 = game_promotions[0]["promotionalOffers"][0]["endDate"]
                 end_date = (
-                    datetime.fromisoformat(date_iso)
-                    # .astimezone(tz=timezone("Asia/Shanghai"))
-                    .strftime("%m {m} %d {d} %H:%M").format(m="月", d="日")
+                    datetime.strptime(date_rfc3339, "%Y-%m-%dT%H:%M:%S.%f%z")
+                    .astimezone(timezone("Asia/Shanghai"))
+                    .strftime("%m {m} %d {d} %H:%M")
+                    .format(m="月", d="日")
                 )
                 # 处理游戏商城链接（API 返回不包含游戏商店 URL，依经验自行拼接
                 if game.get("productSlug"):
