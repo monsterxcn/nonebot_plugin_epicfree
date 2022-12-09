@@ -93,7 +93,7 @@ async def getEpicFree() -> List[MessageSegment]:
     if not games:
         return [
             MessageSegment.node_custom(
-                user_id=2854196310,
+                user_id=2854196320,
                 nickname="EpicGameStore",
                 content=Message("Epic 可能又抽风啦，请稍后再试（"),
             )
@@ -131,7 +131,7 @@ async def getEpicFree() -> List[MessageSegment]:
                     ]:
                         msgList.append(
                             MessageSegment.node_custom(
-                                user_id=2854196310,
+                                user_id=2854196320,
                                 nickname="EpicGameStore",
                                 content=Message(MessageSegment.image(image["url"])),
                             )
@@ -154,9 +154,9 @@ async def getEpicFree() -> List[MessageSegment]:
                     .format(m="月", d="日")
                 )
                 # 处理游戏商城链接（API 返回不包含游戏商店 URL，依经验自行拼接
-                if game.get("productSlug"):
+                if game.get("urlSlug"):
                     game_url = "https://store.epicgames.com/zh-CN/p/{}".format(
-                        game["productSlug"].replace("/home", "")
+                        game["urlSlug"].replace("/home", "")
                     )
                 elif game.get("url"):
                     game_url = game["url"]
@@ -185,12 +185,12 @@ async def getEpicFree() -> List[MessageSegment]:
                 msgList.extend(
                     [
                         MessageSegment.node_custom(
-                            user_id=2854196310,
+                            user_id=2854196320,
                             nickname="EpicGameStore",
                             content=Message(MessageSegment.text(game_url)),
                         ),
                         MessageSegment.node_custom(
-                            user_id=2854196310,
+                            user_id=2854196320,
                             nickname="EpicGameStore",
                             content=Message(
                                 (
@@ -217,7 +217,7 @@ async def getEpicFree() -> List[MessageSegment]:
         msgList.insert(
             0,
             MessageSegment.node_custom(
-                user_id=2854196310,
+                user_id=2854196320,
                 nickname="EpicGameStore",
                 content=Message(f"{gameCnt} 款游戏现在免费！" if gameCnt else "暂未找到正在促销的游戏..."),
             ),
