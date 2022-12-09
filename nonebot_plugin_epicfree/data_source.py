@@ -1,5 +1,4 @@
 import json
-import os
 from datetime import datetime
 from pathlib import Path
 from traceback import format_exc
@@ -14,15 +13,14 @@ try:
     from nonebot.adapters.onebot.v11 import Message, MessageSegment  # type: ignore
 except ImportError:
     from nonebot.adapters.cqhttp import Message, MessageSegment  # type: ignore
-try:
-    resPath = Path(get_driver().config.resources_dir) / "epicfree"
-    assert os.path.exists(resPath)
-    cache = resPath / "status.json"
-except (AttributeError, AssertionError):
-    resPath = Path() / "data" / "epicfree"
-    if not os.path.exists(resPath):
-        resPath.mkdir(parents=True, exist_ok=True)
-    cache = resPath / "status.json"
+
+resPathParent = getattr(get_driver().config, "resources_dir", None)
+if resPathParent and Path(resPathParent).exists():
+    resPath = Path(resPathParent) / "epicfree"
+else:
+    resPath = Path("data/epicfree")
+resPath.mkdir(parents=True, exist_ok=True)
+cache = resPath / "status.json"
 
 
 # 写入与读取订阅信息

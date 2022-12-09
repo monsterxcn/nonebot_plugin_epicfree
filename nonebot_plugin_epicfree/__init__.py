@@ -19,12 +19,7 @@ except ImportError:
 
 from .data_source import getEpicFree, subscribeHelper
 
-driver = get_driver()
-epicScheduler = (
-    str(driver.config.epic_scheduler)
-    if hasattr(driver.config, "gspanel_alias")
-    else "5 8 8 8"
-)
+epicScheduler = str(getattr(get_driver().config, "epic_scheduler", "5 8 8 8"))
 day_of_week, hour, minute, second = epicScheduler.split(" ")
 
 
