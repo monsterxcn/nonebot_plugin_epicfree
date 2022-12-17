@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot_plugin_epicfree"
-version = "0.2.3"
+version = "0.2.4"
 description = "EpicGameStore free games promotions plugin for NoneBot2"
 authors = ["monsterxcn <monsterxcn@gmail.com>"]
 documentation = "https://github.com/monsterxcn/nonebot_plugin_epicfree#readme"

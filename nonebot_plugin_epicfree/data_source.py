@@ -152,11 +152,7 @@ async def getEpicFree() -> List[MessageSegment]:
                     .format(m="月", d="日")
                 )
                 # 处理游戏商城链接（API 返回不包含游戏商店 URL，依经验自行拼接
-                if game.get("urlSlug"):
-                    game_url = "https://store.epicgames.com/zh-CN/p/{}".format(
-                        game["urlSlug"].replace("/home", "")
-                    )
-                elif game.get("url"):
+                if game.get("url"):
                     game_url = game["url"]
                 else:
                     slugs = (
