@@ -1,11 +1,11 @@
+from re import IGNORECASE
 from traceback import format_exc
 from typing import Dict
 
-from nonebot import get_bot, get_driver, on_regex
+from nonebot import get_bot, get_driver, on_regex, require
 from nonebot.exception import FinishedException
 from nonebot.log import logger
 from nonebot.typing import T_State
-from nonebot_plugin_apscheduler import scheduler
 
 try:
     from nonebot.adapters.onebot.v11 import Bot, Event, Message  # type: ignore
@@ -17,13 +17,16 @@ except ImportError:
     from nonebot.adapters.cqhttp import Bot, Event, Message  # type: ignore
     from nonebot.adapters.cqhttp.event import GroupMessageEvent, MessageEvent  # type: ignore
 
-from .data_source import getEpicFree, subscribeHelper
+require("nonebot_plugin_apscheduler")
+from nonebot_plugin_apscheduler import scheduler  # noqa: E402
+
+from .data_source import getEpicFree, subscribeHelper  # noqa: E402
 
 epicScheduler = str(getattr(get_driver().config, "epic_scheduler", "5 8 8 8"))
 day_of_week, hour, minute, second = epicScheduler.split(" ")
 
 
-epicMatcher = on_regex(r"((E|e)(P|p)(I|i)(C|c))?喜(加一|\+1)", priority=2)
+epicMatcher = on_regex(r"^(epic)?喜(加|\+|＋)(一|1)$", priority=2, flags=IGNORECASE)
 
 
 @epicMatcher.handle()
@@ -35,7 +38,7 @@ async def onceHandle(bot: Bot, event: Event):
         await bot.send_private_forward_msg(user_id=event.user_id, messages=imfree)  # type: ignore
 
 
-epicSubMatcher = on_regex(r"喜(加一|\+1)(私聊)?订阅(删除|取消)?", priority=1)
+epicSubMatcher = on_regex(r"^喜(加|\+|＋)(一|1)(私聊)?订阅(删除|取消)?$", priority=1)
 
 
 @epicSubMatcher.handle()

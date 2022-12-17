@@ -56,11 +56,11 @@ pip install --upgrade nonebot_plugin_epicfree
 
 
 ```python
-# nonebot_plugin_epicfree/__init__.py#L25
-epicMatcher = on_regex(r"((E|e)(P|p)(I|i)(C|c))?喜(加一|\+1)")
+# nonebot_plugin_epicfree/__init__.py#L29
+epicMatcher = on_regex(r"^(epic)?喜(加|\+|＋)(一|1)$", priority=2, flags=IGNORECASE)
 
-# nonebot_plugin_epicfree/__init__.py#L37
-epicSubMatcher = on_regex(r"喜(加一|\+1)(私聊)?订阅(删除|取消)?")
+# nonebot_plugin_epicfree/__init__.py#L41
+epicSubMatcher = on_regex(r"^喜(加|\+|＋)(一|1)(私聊)?订阅(删除|取消)?$", priority=1)
 ```
 
 
