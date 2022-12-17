@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://github.com/monsterxcn/nonebot_plugin_epicfree/actions">
-    <img src="https://img.shields.io/github/workflow/status/monsterxcn/Typecho-Theme-VOID/Build?style=flat-square" alt="actions">
+    <img src="https://img.shields.io/github/actions/workflow/status/monsterxcn/nonebot_plugin_epicfree/publish.yml?branch=main&style=flat-square" alt="actions">
   </a>
   <a href="https://raw.githubusercontent.com/monsterxcn/nonebot_plugin_epicfree/master/LICENSE">
     <img src="https://img.shields.io/github/license/monsterxcn/nonebot_plugin_epicfree?style=flat-square" alt="license">
