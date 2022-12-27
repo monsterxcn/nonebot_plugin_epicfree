@@ -56,11 +56,11 @@ pip install --upgrade nonebot_plugin_epicfree
 
 
 ```python
-# nonebot_plugin_epicfree/__init__.py#L29
-epicMatcher = on_regex(r"^(epic)?喜(加|\+|＋)(一|1)$", priority=2, flags=IGNORECASE)
+# nonebot_plugin_epicfree/__init__.py#L27
+epic_matcher = on_regex(r"^(epic)?喜(加|\+|＋)(一|1)$", priority=2, flags=IGNORECASE)
 
-# nonebot_plugin_epicfree/__init__.py#L41
-epicSubMatcher = on_regex(r"^喜(加|\+|＋)(一|1)(私聊)?订阅(删除|取消)?$", priority=1)
+# nonebot_plugin_epicfree/__init__.py#L39
+sub_matcher = on_regex(r"^喜(加|\+|＋)(一|1)(私聊)?订阅(删除|取消)?$", priority=1)
 ```
 
 
@@ -77,13 +77,13 @@ epicSubMatcher = on_regex(r"^喜(加|\+|＋)(一|1)(私聊)?订阅(删除|取消
 
 ```
 RESOURCES_DIR="/data/bot/resources"
-EPIC_SCHEDULER="5 8 8 8"
+EPIC_SCHEDULER="8 8 8"
 ```
 
 
 限免游戏资讯订阅功能默认在机器人根目录下 `/data/epicfree` 文件夹内生成配置文件。定义 `RESOURCES_DIR` 环境变量即可指定用于存放订阅配置的文件夹，填写包含 `epicfree` 文件夹的 **父级文件夹** 路径即可。如果是 Windows 系统应写成类似 `D:/path/to/resources_dir` 的格式。
 
-限免游戏资讯订阅默认每周六 08:08:08 发送，定义 `EPIC_SCHEDULER` 环境变量即可指定推送时间，该配置的四个数字依次代表 `day_of_week` `hour` `minute` `second`。
+限免游戏资讯订阅默认 08:08:08 发送（如果当天的游戏已经推送过则不产生推送），定义 `EPIC_SCHEDULER` 环境变量即可指定推送时间，该配置的三个数字依次代表 `hour` `minute` `second`。
 
 
 **特别鸣谢**
