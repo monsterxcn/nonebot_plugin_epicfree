@@ -44,11 +44,14 @@ async def sub_handle(bot: Bot, event: MessageEvent, state: T_State):
     msg = event.get_plaintext()
     state["action"] = "删除" if any(s in msg for s in ["删除", "取消"]) else "启用"
     if isinstance(event, GroupMessageEvent):
-        if event.sender.role not in ["admin", "owner"] or "私聊" in msg:
+        if (
+            (event.sender.role not in ["admin", "owner"])
+            and (event.get_user_id() not in bot.config.superusers)
+        ) or "私聊" in msg:
             # 普通群员只会启用私聊订阅
             state["sub_type"] = "私聊"
         else:
-            # 管理员用户询问需要私聊订阅还是群聊订阅
+            # 管理员用户、主人用户询问需要私聊订阅还是群聊订阅
             pass
     else:
         state["sub_type"] = "私聊"
